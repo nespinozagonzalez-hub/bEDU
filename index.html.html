@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Lumina — Operación Vega</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#050a0f;--bg2:#0a1520;--panel:#0d1e2e;--border:#1a3a5c;
+  --glow:#00c8ff;--glow2:#ff4b6e;--glow3:#39ff14;--glow4:#ffcc00;--glow5:#bf7fff;--glow6:#ff9f43;
+  --text:#c8e6f5;--muted:#4a7a99;
+  --font-mono:'Share Tech Mono',monospace;--font-display:'Exo 2',sans-serif;--font-body:'Rajdhani',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,200,255,.012) 2px,rgba(0,200,255,.012) 4px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;opacity:.3}
+.screen{display:none;min-height:100vh}.screen.active{display:flex;flex-direction:column}
+/* INTRO */
+#screen-intro{align-items:center;justify-content:center;position:relative;overflow:hidden}
+.intro-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(0,200,255,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 70%,rgba(255,75,110,.06) 0%,transparent 50%)}
+.grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.05) 1px,transparent 1px);background-size:60px 60px;animation:gridShift 20s linear infinite}
+@keyframes gridShift{0%{transform:translateY(0)}100%{transform:translateY(60px)}}
+.intro-content{position:relative;z-index:10;text-align:center;max-width:820px;padding:40px 20px}
+.hospital-logo{font-family:var(--font-display);font-size:clamp(12px,2vw,16px);font-weight:300;letter-spacing:8px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;animation:fadeIn 1s ease .5s both}
+.operation-title{font-family:var(--font-display);font-size:clamp(42px,8vw,80px);font-weight:900;line-height:.9;text-transform:uppercase;margin-bottom:8px;animation:fadeIn 1s ease .8s both}
+.operation-title .line1{color:var(--glow);text-shadow:0 0 40px var(--glow)}
+.operation-title .line2{color:#fff}
+.operation-title .line3{color:var(--glow2);text-shadow:0 0 40px var(--glow2)}
+.classified-badge{display:inline-block;border:2px solid var(--glow2);color:var(--glow2);font-family:var(--font-mono);font-size:11px;letter-spacing:4px;padding:4px 16px;margin:20px 0;animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.intro-text{font-size:15px;line-height:1.7;color:#8ab4cc;max-width:640px;margin:0 auto 30px;animation:fadeIn 1s ease 1.2s both}
+.intro-text strong{color:var(--glow)}
+.role-section{animation:fadeIn 1s ease 1.5s both}
+.section-label{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
+.name-input-wrap{margin-bottom:24px}
+.name-input{background:rgba(0,200,255,.05);border:1px solid var(--border);border-bottom:2px solid var(--glow);color:#fff;font-family:var(--font-mono);font-size:18px;padding:10px 16px;width:300px;outline:none;text-align:center;letter-spacing:2px;transition:all .3s}
+.name-input:focus{border-bottom-color:var(--glow);box-shadow:0 4px 20px rgba(0,200,255,.2);background:rgba(0,200,255,.08)}
+.name-input::placeholder{color:var(--muted);font-size:14px;letter-spacing:1px}
+.equipment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:700px;margin:0 auto 30px}
+.equip-card{background:var(--panel);border:1px solid var(--border);padding:16px 12px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.equip-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 50%,rgba(0,200,255,.04));pointer-events:none}
+.equip-card:hover{border-color:var(--glow);transform:translateY(-2px)}
+.equip-card.selected{border-color:var(--glow);background:rgba(0,200,255,.08)}
+.equip-card.selected::after{content:'✓';position:absolute;top:6px;right:10px;color:var(--glow3);font-size:14px}
+.equip-icon{font-size:28px;margin-bottom:8px}
+.equip-name{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--glow);letter-spacing:1px}
+.equip-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+.btn-primary{background:transparent;border:2px solid var(--glow);color:var(--glow);font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:3px;padding:14px 40px;cursor:pointer;text-transform:uppercase;transition:all .25s;position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;inset:0;background:var(--glow);transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1}
+.btn-primary:hover{color:var(--bg)}.btn-primary:hover::before{transform:scaleX(1)}
+.btn-primary:disabled{opacity:.3;cursor:not-allowed}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:12px;letter-spacing:2px;padding:8px 20px;cursor:pointer;text-transform:uppercase;transition:all .25s}
+.btn-secondary:hover{border-color:var(--muted);color:var(--text)}
+/* HUD */
+#screen-game{padding:0}
+.hud{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.hud-title{font-family:var(--font-mono);font-size:11px;color:var(--glow);letter-spacing:2px;flex:1;min-width:140px}
+.hud-player{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+.hud-player span{color:var(--glow4)}
+.timer-wrap{display:flex;align-items:center;gap:8px}
+.timer-label{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px}
+.timer-display{font-family:var(--font-mono);font-size:22px;font-weight:bold;color:var(--glow);min-width:70px;text-align:right;text-shadow:0 0 20px var(--glow);transition:color .5s}
+.timer-display.warning{color:var(--glow4);text-shadow:0 0 20px var(--glow4);animation:pulse 1s infinite}
+.timer-display.critical{color:var(--glow2);text-shadow:0 0 20px var(--glow2)}
+.locks-hud{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.lock-dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--muted);transition:all .5s}
+.lock-dot.unlocked{background:var(--glow3);border-color:var(--glow3);box-shadow:0 0 8px var(--glow3)}
+.hint-btn{background:transparent;border:1px solid var(--glow4);color:var(--glow4);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:5px 12px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.hint-btn:hover{background:rgba(255,204,0,.1)}
+/* GAME BODY */
+.game-body{display:grid;grid-template-columns:290px 1fr;min-height:calc(100vh - 58px)}
+.map-panel{background:var(--bg2);border-right:1px solid var(--border);padding:18px;overflow-y:auto}
+.map-panel-label{font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:12px}
+.hospital-map{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.map-room{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;font-family:var(--font-mono);font-size:8px;text-align:center;color:var(--muted);letter-spacing:1px;gap:3px;padding:8px 5px;min-height:68px}
+.map-room:hover{border-color:var(--glow);color:var(--text)}
+.map-room.active-zone{border-color:var(--glow);color:var(--glow);background:rgba(0,200,255,.06);animation:roomPulse 2s ease infinite}
+.map-room.solved{border-color:var(--glow3);color:var(--glow3);background:rgba(57,255,20,.04)}
+.map-room.locked-room{opacity:.3;cursor:not-allowed;pointer-events:none}
+@keyframes roomPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,255,.3)}50%{box-shadow:0 0 0 5px rgba(0,200,255,0)}}
+.room-icon{font-size:17px}.room-name{font-size:8px;line-height:1.2}.room-status{font-size:7px;color:var(--glow4)}
+.map-legend{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.legend-item{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:9px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.progress-section{margin-top:14px}
+.progress-bar-wrap{background:var(--bg);border:1px solid var(--border);height:6px;margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--glow),var(--glow3));transition:width 1s ease;box-shadow:0 0 10px var(--glow)}
+.progress-label{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+/* PUZZLE PANEL */
+.puzzle-panel{padding:26px;overflow-y:auto}
+.zone-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.zone-icon-big{font-size:42px;line-height:1}
+.zone-title{font-family:var(--font-display);font-size:24px;font-weight:900;color:#fff;text-transform:uppercase;line-height:1}
+.zone-subtitle{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+.zone-description{font-size:14px;color:#8ab4cc;line-height:1.6;margin-bottom:20px;padding:14px;background:rgba(0,200,255,.03);border-left:3px solid var(--border)}
+.guide-bubble{background:rgba(255,204,0,.05);border:1px solid rgba(255,204,0,.3);border-radius:0 12px 12px 12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#ffe08a;line-height:1.5}
+.guide-bubble::before{content:'💡 GUÍA';display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--glow4);margin-bottom:6px}
+.case-file{background:var(--panel);border:1px solid var(--border);margin-bottom:16px;overflow:hidden}
+.case-file-header{background:rgba(0,200,255,.08);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px}
+.case-file-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--glow);text-transform:uppercase}
+.case-file-body{padding:14px}
+.data-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:12px}
+.data-item{background:var(--bg);border:1px solid var(--border);padding:7px 10px}
+.data-label{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.data-value{font-family:var(--font-mono);font-size:14px;color:var(--glow4);font-weight:bold}
+.data-value.alert{color:var(--glow2)}.data-value.normal{color:var(--glow3)}
+.case-text{font-size:13px;color:#8ab4cc;line-height:1.6}
+.case-text strong{color:var(--glow)}.case-text em{color:var(--glow4);font-style:normal}
+.puzzle-section{margin-top:20px}
+.puzzle-title{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--glow);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.puzzle-title::before{content:'';display:block;width:18px;height:2px;background:var(--glow)}
+.lock-visual{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;padding:14px;background:var(--bg);border:1px solid var(--border)}
+.lock-icon{font-size:30px;transition:all .5s;flex-shrink:0}
+.lock-icon.open{filter:drop-shadow(0 0 12px var(--glow3))}
+.lock-info{flex:1}
+.lock-type{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px}
+.lock-hint{font-size:13px;color:var(--text);margin-top:4px;line-height:1.5}
+.answer-wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.answer-input{background:rgba(0,200,255,.05);border:1px solid var(--border);border-bottom:2px solid var(--glow);color:#fff;font-family:var(--font-mono);font-size:18px;padding:10px 14px;width:220px;outline:none;letter-spacing:3px;text-transform:uppercase;transition:all .3s}
+.answer-input:focus{box-shadow:0 4px 20px rgba(0,200,255,.15);background:rgba(0,200,255,.08)}
+.answer-input.correct{border-bottom-color:var(--glow3);color:var(--glow3)}
+.answer-input.incorrect{border-bottom-color:var(--glow2);animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.check-btn{background:transparent;border:2px solid var(--glow);color:var(--glow);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;padding:11px 18px;cursor:pointer;text-transform:uppercase;transition:all .25s}
+.check-btn:hover{background:var(--glow);color:var(--bg)}
+.feedback-msg{font-family:var(--font-mono);font-size:12px;padding:8px 14px;border-left:3px solid transparent;transition:all .3s;min-height:34px}
+.feedback-msg.success{color:var(--glow3);border-color:var(--glow3);background:rgba(57,255,20,.05)}
+.feedback-msg.error{color:var(--glow2);border-color:var(--glow2);background:rgba(255,75,110,.05)}
+.welcome-zone{display:flex;align-items:center;justify-content:center;height:100%;text-align:center}
+.welcome-inner{max-width:520px}
+.welcome-code{font-family:var(--font-mono);font-size:60px;color:rgba(0,200,255,.12);letter-spacing:-4px;line-height:1;margin-bottom:20px}
+.welcome-title{font-family:var(--font-display);font-size:22px;font-weight:700;color:#fff;margin-bottom:12px}
+.welcome-text{font-size:14px;color:var(--muted);line-height:1.6}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.visible{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border);max-width:500px;width:90%;padding:30px;position:relative}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--glow4),transparent)}
+.modal-title{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--glow4);letter-spacing:2px;margin-bottom:14px}
+.modal-text{font-size:14px;color:var(--text);line-height:1.7;margin-bottom:18px}
+.modal-warning{font-family:var(--font-mono);font-size:11px;color:var(--glow2);letter-spacing:1px;margin-bottom:18px}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;transition:color .2s}
+.modal-close:hover{color:#fff}
+/* FINAL */
+#screen-final{align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+.final-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(57,255,20,.12) 0%,transparent 70%);animation:finalPulse 3s ease infinite}
+@keyframes finalPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.final-content{position:relative;z-index:10;max-width:700px;padding:40px 20px}
+.final-badge{font-size:80px;margin-bottom:20px;animation:bounceIn .8s cubic-bezier(.36,.07,.19,.97)}
+@keyframes bounceIn{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.final-title{font-family:var(--font-display);font-size:clamp(32px,6vw,56px);font-weight:900;color:var(--glow3);text-shadow:0 0 40px var(--glow3);text-transform:uppercase;margin-bottom:8px}
+.final-subtitle{font-family:var(--font-mono);font-size:14px;color:var(--muted);letter-spacing:3px;margin-bottom:30px}
+.message-terminal{background:var(--bg);border:1px solid var(--glow3);padding:22px;text-align:left;margin-bottom:30px;box-shadow:0 0 40px rgba(57,255,20,.15);position:relative}
+.message-terminal::before{content:'> MENSAJE DESCIFRADO — Dr. A. Vega';display:block;font-family:var(--font-mono);font-size:10px;color:var(--glow3);letter-spacing:2px;margin-bottom:14px}
+.message-terminal p{font-family:var(--font-mono);font-size:13px;color:#c8f5d0;line-height:1.8}
+.final-stats{display:flex;justify-content:center;gap:30px;margin-bottom:30px;flex-wrap:wrap}
+.stat-block{text-align:center}
+.stat-value{font-family:var(--font-mono);font-size:30px;font-weight:bold;color:var(--glow);display:block}
+.stat-label{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:2px}
+/* MISC */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.confetti-piece{position:fixed;width:8px;height:8px;pointer-events:none;animation:confettiFall linear forwards;z-index:9000;border-radius:1px}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border)}
+.cinematic-overlay{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity 1s}
+.cinematic-overlay.fade-out{opacity:0;pointer-events:none}
+.cinematic-text{font-family:var(--font-mono);font-size:clamp(12px,2vw,15px);color:var(--glow);text-align:center;letter-spacing:2px;opacity:0;animation:typeIn .5s ease forwards;max-width:600px;padding:0 20px}
+@keyframes typeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.morse-line{height:2px;background:var(--glow);animation:morseAnim 1s ease infinite alternate}
+@keyframes morseAnim{from{opacity:.2;width:40px}to{opacity:1;width:120px}}
+.solved-banner{background:rgba(57,255,20,.06);border:1px solid var(--glow3);padding:18px;text-align:center;margin-top:18px}
+.solved-banner-title{font-family:var(--font-display);font-size:20px;font-weight:900;color:var(--glow3);text-shadow:0 0 20px var(--glow3)}
+.solved-banner-sub{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-bg"></div><div class="grid-lines"></div>
+  <div class="intro-content">
+    <div class="hospital-logo">Hospital Lumina · Sistema de Acceso Restringido</div>
+    <div class="operation-title">
+      <div class="line1">OPERACIÓN</div>
+      <div class="line2">VEGA</div>
+    </div>
+    <div class="classified-badge">⚠ EXPEDIENTE CLASIFICADO — 7 MISIONES + OFICINA FINAL</div>
+    <p class="intro-text">
+      El <strong>Dr. Arturo Vega</strong>, jefe de neurociencias, ha desaparecido dejando un mensaje cifrado. Bloqueó su oficina con <strong>7 candados</strong> vinculados a los casos clínicos de sus residentes. Tienes <strong>60 minutos</strong>. Solo quien comprenda la biología detrás de cada caso podrá descifrar el código final.
+    </p>
+    <div class="role-section">
+      <div class="section-label">// paso 01 — identificación del agente</div>
+      <div class="name-input-wrap">
+        <input type="text" class="name-input" id="playerName" placeholder="INGRESA TU NOMBRE" maxlength="20" autocomplete="off" oninput="checkReady()">
+      </div>
+      <div class="section-label">// paso 02 — selecciona tu equipamiento</div>
+      <div class="equipment-grid">
+        <div class="equip-card" data-equip="escáner" onclick="selectEquip(this)">
+          <div class="equip-icon">🧠</div>
+          <div class="equip-name">Escáner Neural</div>
+          <div class="equip-desc">Analiza patrones cerebrales. Tu primera pista del juego es completamente gratis</div>
+        </div>
+        <div class="equip-card" data-equip="kit" onclick="selectEquip(this)">
+          <div class="equip-icon">🧪</div>
+          <div class="equip-name">Kit Bioquímico</div>
+          <div class="equip-desc">Procesa muestras al instante. Comienzas con +5 minutos extra (65 min total)</div>
+        </div>
+        <div class="equip-card" data-equip="tablet" onclick="selectEquip(this)">
+          <div class="equip-icon">📊</div>
+          <div class="equip-name">Tablet de Datos</div>
+          <div class="equip-desc">Acceso a base clínica. La primera pista de CADA sala no descuenta tiempo</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="startBtn" disabled onclick="startGame()">▶ INICIAR MISIÓN</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="hud">
+    <div class="hud-title">🏥 HOSPITAL LUMINA · OP. VEGA</div>
+    <div class="hud-player">AGENTE: <span id="hud-name">—</span></div>
+    <div class="locks-hud" id="locks-hud"></div>
+    <div class="timer-wrap">
+      <span class="timer-label">TIEMPO</span>
+      <span class="timer-display" id="timer">60:00</span>
+    </div>
+    <button class="hint-btn" onclick="showHint()">💡 PISTA (−6 min)</button>
+  </div>
+  <div class="game-body">
+    <!-- MAP -->
+    <div class="map-panel">
+      <div class="map-panel-label">// PLANO DEL HOSPITAL</div>
+      <div class="hospital-map">
+        <div class="map-room" id="room-0" onclick="enterZone(0)"><div class="room-icon">🛏️</div><div class="room-name">SALA SUEÑO</div><div class="room-status" id="room-status-0">ACCEDER</div></div>
+        <div class="map-room" id="room-1" onclick="enterZone(1)"><div class="room-icon">⚗️</div><div class="room-name">LAB. NEUROENDOCRINO</div><div class="room-status" id="room-status-1">ACCEDER</div></div>
+      </div>
+      <div class="hospital-map">
+        <div class="map-room" id="room-2" onclick="enterZone(2)"><div class="room-icon">💊</div><div class="room-name">FARMACOLOGÍA</div><div class="room-status" id="room-status-2">ACCEDER</div></div>
+        <div class="map-room" id="room-3" onclick="enterZone(3)"><div class="room-icon">🧬</div><div class="room-name">GENÉTICA NEURAL</div><div class="room-status" id="room-status-3">ACCEDER</div></div>
+      </div>
+      <div class="hospital-map">
+        <div class="map-room" id="room-4" onclick="enterZone(4)"><div class="room-icon">⚡</div><div class="room-name">NEUROPLASTICIDAD</div><div class="room-status" id="room-status-4">ACCEDER</div></div>
+        <div class="map-room" id="room-5" onclick="enterZone(5)"><div class="room-icon">🫀</div><div class="room-name">URGENCIAS SNA</div><div class="room-status" id="room-status-5">ACCEDER</div></div>
+      </div>
+      <div class="hospital-map" style="grid-template-columns:1fr">
+        <div class="map-room" id="room-6" onclick="enterZone(6)"><div class="room-icon">🔬</div><div class="room-name">TOXICOLOGÍA NEURAL</div><div class="room-status" id="room-status-6">ACCEDER</div></div>
+      </div>
+      <div class="hospital-map" style="grid-template-columns:1fr;margin-top:4px">
+        <div class="map-room locked-room" id="room-7" onclick="enterZone(7)" style="border-color:rgba(57,255,20,.25);color:rgba(57,255,20,.35);min-height:56px"><div class="room-icon">🔒</div><div class="room-name">OFICINA DR. VEGA</div><div class="room-status" id="room-status-7">🔐 BLOQUEADA</div></div>
+      </div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--glow)"></div>Sala activa</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--glow3)"></div>Resuelta ✓</div>
+        <div class="legend-item"><div class="legend-dot" style="border:1px solid var(--muted)"></div>Sin resolver</div>
+      </div>
+      <div class="progress-section">
+        <div class="section-label">// PROGRESO</div>
+        <div class="progress-bar-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-label" id="progress-label">0 / 7 CANDADOS ABIERTOS</div>
+      </div>
+    </div>
+    <!-- PUZZLE -->
+    <div class="puzzle-panel" id="puzzle-panel">
+      <div class="welcome-zone">
+        <div class="welcome-inner">
+          <div class="welcome-code">?·?·?·?·?·?·?</div>
+          <div class="welcome-title">Elige una sala para comenzar</div>
+          <div class="welcome-text">El Dr. Vega dejó 7 candados en su oficina. Cada sala del hospital contiene un caso clínico con la pista para abrirlo. Completa los 7 para descifrar el código final y revelar el expediente secreto.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div id="screen-final" class="screen">
+  <div class="final-bg"></div><div class="grid-lines"></div>
+  <div class="final-content">
+    <div class="final-badge">🏆</div>
+    <div class="final-title">MISIÓN COMPLETADA</div>
+    <div class="final-subtitle">// EXPEDIENTE VEGA DESBLOQUEADO</div>
+    <div class="message-terminal">
+      <p>Si estás leyendo esto, eres alguien que comprende que el cuerpo humano no es una colección de síntomas aislados. Todo está conectado. El sueño regula el estrés. El estrés modifica los circuitos de recompensa. Las drogas secuestran esos mismos circuitos. La neuroplasticidad —el receptor NMDA, el BDNF, la neurogénesis— es la clave de la recuperación. El Hospital Lumina no es un secreto. Es una advertencia: los pacientes que llegan aquí sufrieron porque nadie les enseñó cómo funciona su propio cerebro. Eso es lo que ustedes pueden cambiar. — Dr. Arturo Vega</p>
+    </div>
+    <div class="final-stats">
+      <div class="stat-block"><span class="stat-value" id="final-time">—</span><span class="stat-label">TIEMPO RESTANTE</span></div>
+      <div class="stat-block"><span class="stat-value" id="final-hints">—</span><span class="stat-label">PISTAS USADAS</span></div>
+      <div class="stat-block"><span class="stat-value" id="final-agent">—</span><span class="stat-label">AGENTE</span></div>
+    </div>
+    <button class="btn-primary" onclick="restartGame()">↺ NUEVA MISIÓN</button>
+  </div>
+</div>
+
+<!-- HINT MODAL -->
+<div class="modal-overlay" id="hint-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeHint()">✕</button>
+    <div class="modal-title">💡 PISTA DESBLOQUEADA</div>
+    <div class="modal-text" id="hint-text">—</div>
+    <div class="modal-warning" id="hint-cost-msg">⚠ Esta pista descontó 6 minutos de tu tiempo.</div>
+    <button class="btn-secondary" onclick="closeHint()">CERRAR</button>
+  </div>
+</div>
+
+<script>
+const state={
+  playerName:'',equipment:'',timeLeft:60*60,timerInterval:null,
+  solved:new Array(8).fill(false),hintsUsed:0,currentZone:-1,
+  bonusHint:false,freeFirstHint:false,usedFreeHintZones:new Set()
+};
+
+const MISSIONS_COUNT=7;
+
+// ─── ZONES ────────────────────────────────────────────
+const zones=[
+{
+  id:0,name:'Sala de Sueño',subtitle:'Caso 01 — Matías · 17 años · Polisómnografía',icon:'🛏️',color:'var(--glow)',
+  lockType:'NÚMERO',
+  lockDesc:'Matías tiene 17 años y su polisómnografía muestra sueño severamente fragmentado. Un ciclo de sueño se considera <strong>completo</strong> cuando culmina en fase REM. Observa el hipnograma: <strong>¿cuántos ciclos REM completos</strong> logró Matías antes de despertarse cada vez? (observa los bloques azules rotulados REM1, REM2…)',
+  answer:'4',
+  guide:'En el hipnograma, cada bloque azul sombreado con etiqueta REM1, REM2, etc. representa el final de un ciclo completo. Cuenta cuántos bloques REM aparecen en el registro de Matías.',
+  hints:[
+    'Observa los bloques azules sombreados en el hipnograma. Están rotulados REM1, REM2, REM3 y REM4. Cada uno representa un ciclo completo de sueño. ¿Cuántos ves en total?',
+    'Respuesta directa: hay 4 episodios REM completos en el hipnograma de Matías. La respuesta es 4.'
+  ],
+  description:'Matías, 17 años, estudiante de secundaria. Somnolencia diurna severa, irritabilidad, caída en el rendimiento académico, microsomnias en clases. Sus padres dicen que "duerme mucho pero siempre está agotado". Derivado a polisómnografía por médico de familia.',
+  caseData:[
+    {label:'Paciente',value:'Matías R., 17 años'},
+    {label:'Tiempo en cama',value:'8.5 h'},
+    {label:'Eficiencia del sueño',value:'49%',alert:true},
+    {label:'Latencia de sueño',value:'62 min',alert:true},
+    {label:'Despertares nocturnos',value:'5',alert:true},
+    {label:'Fase REM (% total)',value:'13%',alert:true},
+  ],
+  caseText:`El registro polisómnográfico muestra una <strong>arquitectura del sueño severamente fragmentada</strong>. Matías tiene una latencia de 62 minutos (normal en adolescentes: &lt;20 min), consistente con síndrome de fase retrasada agravado por el uso de pantallas.
+
+Cuando logra dormirse, intenta alcanzar sueño profundo <em>(N3: ondas delta)</em>, pero los despertares interrumpen los ciclos repetidamente. Su <strong>cortisol matutino elevado</strong> (31 μg/dL) refleja la activación del eje HPA por privación crónica.
+
+La somnolencia diurna se explica por la deuda de <em>sueño REM acumulada</em> — fase esencial para la consolidación de memoria y regulación emocional en la adolescencia.`,
+  hipnogram:true
+},
+{
+  id:1,name:'Lab. Neuroendocrino',subtitle:'Caso 02 — Camila · 28 años · Eje HPA',icon:'⚗️',color:'var(--glow2)',
+  lockType:'LETRA INICIAL',
+  lockDesc:'Camila tiene una hormona glucocorticoide <strong>crónicamente elevada</strong> día y noche, perdiendo su ritmo circadiano. Esta misma hormona en exceso produce neurotoxicidad hipocampal (−14% de volumen) y suprime el sistema inmune. Ingresa <strong>solo la letra inicial</strong> de esa hormona.',
+  answer:'C',
+  guide:'El eje HPA: Hipotálamo (CRH) → Hipófisis (ACTH) → Corteza Adrenal. La corteza adrenal secreta glucocorticoides. El glucocorticoide principal en humanos tiene los valores elevados que ves en los exámenes de Camila. Su nombre empieza con C. Solo necesitas esa letra.',
+  hints:[
+    'Los exámenes de Camila muestran 31 μg/dL matutino y 18 μg/dL nocturno (ambos elevados). El glucocorticoide principal del eje HPA humano es el CORTISOL. Su primera letra es C.',
+    'Respuesta directa: CORTISOL → inicial = C. Ingresa la letra C.'
+  ],
+  description:'Camila, 28 años, residente de medicina. Agotamiento crónico, infecciones frecuentes, gastritis, amenorrea secundaria e insomnio de inicio. Trabaja 12-14 horas diarias desde hace 10 meses. "Nunca puedo desconectarme."',
+  caseData:[
+    {label:'Cortisol matutino',value:'31 μg/dL',alert:true},
+    {label:'Cortisol nocturno',value:'18 μg/dL',alert:true},
+    {label:'CRH (hipotálamo)',value:'↑↑ elevado',alert:true},
+    {label:'ACTH (hipófisis)',value:'↑ elevado',alert:true},
+    {label:'IgA secretora',value:'↓ reducida',alert:true},
+    {label:'Vol. hipocampal',value:'−14%',alert:true},
+  ],
+  caseText:`Los exámenes confirman <strong>pérdida del ritmo circadiano del glucocorticoide principal</strong>. Normalmente tiene un pico al amanecer y cae a mínimos nocturnos — en Camila permanece elevado todo el día y la noche.
+
+La <em>CRH hipotalámica elevada crónicamente</em> suprime la GnRH → ausencia de ciclos menstruales (amenorrea). El sistema inmune muestra supresión: IgA secretora reducida explica las infecciones frecuentes.
+
+La resonancia revela una <strong>reducción del 14% del volumen hipocampal</strong>: el hipocampo es vulnerable a la neurotoxicidad por glucocorticoides crónicos por su alta densidad de receptores. Camila está en <em>fase de agotamiento del síndrome de adaptación general de Selye</em>.`
+},
+{
+  id:2,name:'Farmacología',subtitle:'Caso 03 — Diego · 22 años · Neurotransmisores SNC',icon:'💊',color:'var(--glow4)',
+  lockType:'NÚMERO',
+  lockDesc:'Diego, 22 años, consumió 3 sustancias esa noche: <strong>alcohol, MDMA y cannabis</strong>. Analiza el mecanismo de acción de cada una e identifica <strong>cuántas actúan predominantemente como depresores del SNC</strong> (reducen la actividad neuronal global potenciando GABA o inhibiendo glutamato).',
+  answer:'2',
+  guide:'Un depresor del SNC reduce la actividad neuronal global (potencia GABA, inhibe NMDA). Clasifica las 3 sustancias: ¿cuáles tienen efecto neto depresor vs. estimulante/entactógeno? Piensa en el mecanismo de cada una con los neurotransmisores implicados.',
+  hints:[
+    'Alcohol: potencia GABA-A e inhibe NMDA → DEPRESOR. MDMA: libera masivamente serotonina y dopamina → ESTIMULANTE/ENTACTÓGENO (no es depresor). Cannabis (THC): actúa sobre CB1, reduce glutamato con efecto neto depresor. ¿Cuántos depresores suma eso?',
+    'Respuesta directa: Alcohol = depresor (1), MDMA = estimulante (0), Cannabis = depresor (2). Total = 2.'
+  ],
+  description:'Diego, 22 años, universitario. Taquicardia (138 bpm), midriasis bilateral 7mm, temperatura 38.9°C, estado disociativo: hipervigilancia alternada con somnolencia. Amigos reportan consumo múltiple de sustancias en fiesta.',
+  caseData:[
+    {label:'Frecuencia cardíaca',value:'138 bpm',alert:true},
+    {label:'Temperatura',value:'38.9 °C',alert:true},
+    {label:'Pupilas',value:'Midriasis 7mm',alert:true},
+    {label:'Glucosa',value:'61 mg/dL',alert:true},
+    {label:'Alcohol (sangre)',value:'0.08 g/dL'},
+    {label:'Tóxico (+)',value:'MDMA, THC',alert:true},
+  ],
+  caseText:`El cuadro es <strong>síndrome serotoninérgico leve-moderado</strong> por MDMA. Este libera masivamente serotonina, dopamina y noradrenalina desde terminales presinápticos e inhibe su recaptación.
+
+El <em>alcohol (0.08 g/dL)</em> potencia receptores GABA-A e inhibe NMDA → sedación e hipoglicemia por bloqueo de gluconeogénesis hepática. El THC actúa sobre receptores <strong>CB1 endocannabinoides</strong>, modulando la liberación de glutamato y GABA con efecto neto depresor.
+
+La combinación generó estado paradójico: <strong>hiperactivación serotoninérgica</strong> (MDMA) sobre <strong>depresión GABAérgica</strong> (alcohol + cannabis). Diego requiere monitoreo cardíaco, hidratación y ambiente de baja estimulación sensorial.`
+},
+{
+  id:3,name:'Genética Neural',subtitle:'Caso 04 — Sebastián · Adicción Crónica · Neurobiología',icon:'🧬',color:'var(--glow5)',
+  lockType:'SIGLA (2 letras)',
+  lockDesc:'En la adicción crónica, el núcleo accumbens acumula un <strong>factor de transcripción</strong> que persiste semanas o meses después del último consumo y cuya acumulación explica el craving en abstinencia y los cambios epigenéticos duraderos. Es una variante truncada de FosB, nombrada con la letra griega "delta" (Δ). Ingresa su <strong>abreviación de 2 letras</strong> (D por delta, luego la inicial de FosB).',
+  answer:'DF',
+  guide:'El factor se llama ΔFosB (Delta-FosB). En texto sin símbolo griego, se escribe con "D" (de Delta) seguido de "F" (de FosB). Esas son las 2 letras que forman la sigla que se pide.',
+  hints:[
+    'El factor de transcripción es ΔFosB. Con D por Delta y F por FosB → la sigla es DF. Este factor se acumula en el núcleo accumbens con cada exposición a la sustancia y es muy estable (persiste semanas). Ingresa DF.',
+    'Respuesta directa: ΔFosB = DF. Ingresa las letras D y F.'
+  ],
+  description:'Sebastián, 31 años. Dependencia al alcohol crónica (8 años). Ingresa a desintoxicación. 21 días de abstinencia. Craving intenso (8/10), anhedonia, alteraciones del sueño REM y disfunción ejecutiva prefrontal. La neuroimagen muestra cambios estructurales.',
+  caseData:[
+    {label:'Años de consumo',value:'8 años',alert:true},
+    {label:'Abstinencia actual',value:'21 días'},
+    {label:'Craving (1-10)',value:'8/10',alert:true},
+    {label:'Vol. corteza PFC',value:'−11%',alert:true},
+    {label:'REM en PSG',value:'8% (↓)',alert:true},
+    {label:'Dopamina basal',value:'↓↓ reducida',alert:true},
+  ],
+  caseText:`Sebastián muestra <strong>neuroadaptación crónica por adicción</strong>. El circuito mesolímbico (área tegmental ventral → núcleo accumbens) sufrió modificaciones epigenéticas profundas.
+
+La exposición repetida al alcohol provocó acumulación de <em>un factor de transcripción estable</em> en el núcleo accumbens — modifica la expresión génica de forma persistente, manteniendo cambios en la sensibilidad dopaminérgica semanas después del último consumo. Esto explica el <strong>craving en abstinencia prolongada</strong>.
+
+La reducción del 11% en corteza prefrontal refleja la <em>hipofrontalidad</em> característica: pérdida del control inhibitorio sobre el circuito límbico. El sueño REM reducido (8%) es consecuencia directa del efecto supresor crónico del alcohol sobre el generador pontino de REM.`
+},
+{
+  id:4,name:'Neuroplasticidad',subtitle:'Caso 05 — Valentina · Rehabilitación Neural Post-TCE',icon:'⚡',color:'var(--glow3)',
+  lockType:'SIGLA (4 letras)',
+  lockDesc:'El receptor ionotrópico de glutamato que actúa como <strong>"detector de coincidencia"</strong> (requiere simultáneamente glutamato + despolarización postsináptica para activarse) y es el principal mediador de la potenciación a largo plazo (LTP). Su nombre viene de su agonista farmacológico. Ingresa su <strong>sigla de 4 letras</strong>.',
+  answer:'NMDA',
+  guide:'Este receptor requiere dos eventos simultáneos: unión de glutamato Y que la neurona postsináptica esté ya despolarizada (para retirar el tapón de Mg²⁺). Por eso "detecta coincidencia". Su nombre son las iniciales de N-Metil-D-Aspartato.',
+  hints:[
+    'El receptor se llama NMDA (N-Metil-D-Aspartato). Tiene un tapón de Mg²⁺ que solo se retira con despolarización. Cuando se activa, permite entrada de Ca²⁺ → activación de quinasas → inserción de receptores AMPA → LTP. Ingresa NMDA.',
+    'Respuesta directa: N-M-D-A. Las 4 letras son NMDA.'
+  ],
+  description:'Valentina, 26 años, en rehabilitación cognitiva post-TCE leve (6 semanas). Dificultades de memoria declarativa, fatiga cognitiva, lentificación del procesamiento. Su neuróloga propone programa de neurorehabilitación basado en neuroplasticidad.',
+  caseData:[
+    {label:'Semanas post-TCE',value:'6 semanas'},
+    {label:'Memoria de trabajo',value:'↓↓ afectada',alert:true},
+    {label:'LTP (estimación)',value:'Reducida',alert:true},
+    {label:'BDNF sérico',value:'↓ 34%',alert:true},
+    {label:'Aprendizaje verbal',value:'62% efectivo',alert:true},
+    {label:'Respuesta ejercicio',value:'↑ BDNF'},
+  ],
+  caseText:`El TCE leve produjo <strong>disfunción sináptica transitoria</strong> sin pérdida neuronal masiva, pero con alteración de los mecanismos de plasticidad. La neurorehabilitación se basa en potenciar la plasticidad residual.
+
+El mecanismo clave es la <em>potenciación a largo plazo (LTP)</em>, que requiere el receptor de glutamato "detector de coincidencia". Cuando se activa, permite entrada de Ca²⁺ → activación de quinasas → fosforilación y inserción de receptores AMPA → fortalecimiento sináptico duradero.
+
+El <strong>BDNF reducido</strong> en Valentina es objetivo terapéutico clave: el ejercicio aeróbico lo aumenta, facilitando la expresión del receptor detector de coincidencia y promoviendo la <em>neurogénesis hipocampal</em> que apoya la recuperación de memoria declarativa.`
+},
+{
+  id:5,name:'Urgencias SNA',subtitle:'Caso 06 — Felipe · 34 años · Crisis Autonómica',icon:'🫀',color:'var(--glow6)',
+  lockType:'PALABRA',
+  lockDesc:'Felipe presentó una crisis de pánico con hiperactivación simpática máxima. El <strong>neurotransmisor liberado por las fibras simpáticas postganglionares</strong> en los órganos diana (corazón, vasos sanguíneos) que produjo la taquicardia y la hipertensión de Felipe. Ingresa su nombre completo en español.',
+  answer:'NORADRENALINA',
+  guide:'Sistema nervioso autónomo simpático: fibras preganglionares usan ACh, pero fibras postganglionares que inervan el corazón y los vasos sanguíneos liberan una catecolamina. También se conoce como norepinefrina. Es la misma molécula que como hormona libera la médula adrenal, pero aquí actúa como neurotransmisor.',
+  hints:[
+    'Las fibras simpáticas postganglionares en corazón y vasos liberan NORADRENALINA (norepinefrina). Actúa sobre receptores β₁ → taquicardia, y sobre α₁ → vasoconstricción → hipertensión. Escribe NORADRENALINA.',
+    'Respuesta: NORADRENALINA (también se acepta NOREPINEFRINA).'
+  ],
+  description:'Felipe, 34 años, ejecutivo. Palpitaciones, disnea, sudoración profusa, sensación de muerte inminente, parestesias en manos. FC: 142 bpm, PA: 168/95. Cuarto episodio similar en el último mes. Niega consumo de sustancias.',
+  caseData:[
+    {label:'Frecuencia cardíaca',value:'142 bpm',alert:true},
+    {label:'Presión arterial',value:'168/95',alert:true},
+    {label:'Saturación O₂',value:'96%'},
+    {label:'Glucosa',value:'142 mg/dL',alert:true},
+    {label:'ECG',value:'Sinusal taquic.'},
+    {label:'Adrenalina (plasma)',value:'↑↑ 850 pg/mL',alert:true},
+  ],
+  caseText:`El cuadro es una <strong>crisis de pánico con respuesta simpática máxima</strong>. El eje hipotálamo → médula adrenal libera adrenalina a la sangre, mientras las fibras simpáticas postganglionares descargan su neurotransmisor en los órganos diana.
+
+La <em>taquicardia</em> (142 bpm) resulta de la activación de receptores β₁ cardíacos. La <em>hipertensión</em> refleja vasoconstricción periférica por receptores α₁. La <strong>sudoración</strong> es la excepción: las glándulas sudoríparas son inervadas simpáticamente pero usan ACh, no el neurotransmisor habitual.
+
+La <em>glucemia elevada</em> (142 mg/dL) refleja glucogenólisis hepática activada por la respuesta simpática. Felipe necesita psicoeducación sobre el eje HPA, técnicas de regulación autonómica y evaluación para trastorno de pánico.`
+},
+{
+  id:6,name:'Toxicología Neural',subtitle:'Caso 07 — Sebastián II · Neuroplasticidad y Recuperación',icon:'🔬',color:'var(--glow)',
+  lockType:'PALABRA (12 letras)',
+  lockDesc:'El proceso por el cual el <strong>hipocampo adulto genera nuevas neuronas funcionales</strong> (en el giro dentado) — proceso suprimido por el estrés crónico y el alcohol, y estimulado por el ejercicio aeróbico y el BDNF. Ingresa el nombre científico de ese proceso (12 letras, sin tilde).',
+  answer:'NEUROGENESIS',
+  guide:'El hipocampo es una de las pocas regiones del cerebro adulto donde nacen nuevas neuronas. Este proceso se compone de: neuro (nervio) + génesis (origen/nacimiento). El alcohol crónico lo suprime; el ejercicio y el BDNF lo estimulan. Escribe la palabra de 12 letras.',
+  hints:[
+    'El proceso se llama NEUROGÉNESIS (sin tilde: NEUROGENESIS). Ocurre en el giro dentado del hipocampo adulto. Es esencial para la memoria episódica y es uno de los mecanismos de recuperación de Sebastián. Ingresa NEUROGENESIS.',
+    'Respuesta directa: NEUROGENESIS (12 letras: N-E-U-R-O-G-E-N-E-S-I-S).'
+  ],
+  description:'Sebastián (semana 8 de abstinencia). Ha iniciado ejercicio aeróbico y terapia cognitivo-conductual. Los biomarcadores muestran recuperación. El equipo quiere identificar el proceso celular hipocampal que está siendo restaurado.',
+  caseData:[
+    {label:'Abstinencia',value:'56 días'},
+    {label:'BDNF sérico',value:'↑ +47%'},
+    {label:'Vol. hipocampal',value:'↑ recuperando'},
+    {label:'Memoria verbal',value:'+31% vs basal'},
+    {label:'Craving (1-10)',value:'3/10 ↓'},
+    {label:'Ejercicio/semana',value:'4 sesiones'},
+  ],
+  caseText:`A 8 semanas de abstinencia, Sebastián muestra <strong>recuperación neuroplástica documentable</strong>. El BDNF sérico aumentó un 47% con el programa de ejercicio — este factor neurotrófico es el principal inductor del proceso de generación de neuronas nuevas en el hipocampo adulto.
+
+El proceso neuroplástico recuperado requiere: proliferación de células progenitoras en el giro dentado → diferenciación a neuronas → maduración e integración a circuitos existentes. El alcohol crónico suprimía cada etapa; la abstinencia y el BDNF las restauran.
+
+La <em>corteza prefrontal también muestra recuperación</em>: mejora del control inhibitorio correlaciona con reducción del craving. La <strong>terapia cognitivo-conductual</strong> potencia la neuroplasticidad prefrontal mediante aprendizaje activo — que también depende del receptor NMDA estudiado en la Sala 5.`
+},
+{
+  id:7,name:'Oficina Dr. Vega',subtitle:'Código Final — Los 7 Candados',icon:'🔒',color:'var(--glow3)',
+  lockType:'CÓDIGO FINAL',
+  lockDesc:'Reúne las respuestas de los 7 candados en orden y concatenadas (sin espacios). Sala 1: número de ciclos REM → Sala 2: letra inicial del glucocorticoide → Sala 3: número de depresores → Sala 4: sigla del factor de transcripción → Sala 5: sigla del receptor → Sala 6: primera letra del neurotransmisor → Sala 7: primeras 3 letras del proceso hipocampal. Todo junto forma el código.',
+  answer:'4C2DFNMDANNEU',
+  guide:'Combina en orden: (Sala1) + (Sala2) + (Sala3) + (Sala4) + (Sala5) + (inicial Sala6) + (3 letras Sala7). Revisa cada respuesta que encontraste y únelas sin espacios.',
+  hints:[
+    'Las respuestas son: Sala1=4, Sala2=C, Sala3=2, Sala4=DF, Sala5=NMDA, Sala6=N (de Noradrenalina), Sala7=NEU (de Neurogenesis). El código es esas respuestas unidas: 4C2DFNMDANNEU.',
+    'Código completo: 4C2DFNMDANNEU. Ingresa exactamente eso.'
+  ],
+  description:'Has reunido los 7 candados. El sistema de seguridad final de la oficina requiere el código maestro formado por las respuestas de todas las salas. Si comprendiste la biología de cada caso, la puerta se abrirá y el expediente quedará revelado.',
+  caseData:[
+    {label:'Candado 1 · Sueño',value:'4 ciclos REM'},
+    {label:'Candado 2 · Estrés',value:'C (Cortisol)'},
+    {label:'Candado 3 · Drogas',value:'2 depresores'},
+    {label:'Candado 4 · Adicción',value:'DF (ΔFosB)'},
+    {label:'Candado 5 · Plasticidad',value:'NMDA'},
+    {label:'Candado 6 · SNA',value:'N (Noradren.)'},
+    {label:'Candado 7 · Neuroplast.',value:'NEU (Neurogenesis)'},
+  ],
+  caseText:`Este es el núcleo de la misión. Los 7 casos del Hospital Lumina comparten un hilo conductor: <strong>el cerebro es plástico, vulnerable y recuperable</strong>.
+
+Matías (sueño) y Camila (estrés) muestran cómo el eje HPA desregula la arquitectura neural. Diego y Sebastián (drogas/adicción) revelan cómo las sustancias secuestran el circuito mesolímbico y dejan huellas epigenéticas (ΔFosB). Felipe (SNA) ejemplifica la hiperactivación autónoma. Valentina y Sebastián II muestran que el receptor NMDA y la neurogénesis permiten la recuperación.
+
+El <strong>código maestro</strong> que combina las 7 respuestas es la prueba de que entendiste cómo todo está conectado: sueño, estrés, drogas, adicción, plasticidad, sistema nervioso autónomo y recuperación neural son <em>un solo sistema integrado</em>.`
+}
+];
+
+// ─── SETUP ─────────────────────────────────────────────
+function selectEquip(card){
+  document.querySelectorAll('.equip-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.equipment=card.dataset.equip;
+  checkReady();
+}
+function checkReady(){
+  const name=document.getElementById('playerName').value.trim();
+  document.getElementById('startBtn').disabled=!(name&&state.equipment);
+}
+function startGame(){
+  state.playerName=document.getElementById('playerName').value.trim();
+  state.timeLeft=(state.equipment==='kit'?65:60)*60;
+  if(state.equipment==='escáner') state.bonusHint=true;
+  if(state.equipment==='tablet') state.freeFirstHint=true;
+  runCinematic();
+}
+function runCinematic(){
+  const ov=document.createElement('div');
+  ov.className='cinematic-overlay';
+  const lines=['// ACCESO CONCEDIDO — HOSPITAL LUMINA',`AGENTE: ${state.playerName.toUpperCase()}`,'// CARGANDO EXPEDIENTES CLASIFICADOS...','⚠ EL DR. VEGA DEJÓ 7 CANDADOS','// TIEMPO DE MISIÓN: '+(state.equipment==='kit'?'65':'60')+' MINUTOS','// INICIANDO OPERACIÓN VEGA...'];
+  document.body.appendChild(ov);
+  const m=document.createElement('div');m.className='morse-line';ov.appendChild(m);
+  let i=0;
+  const next=()=>{
+    if(i<lines.length){const el=document.createElement('div');el.className='cinematic-text';el.textContent=lines[i++];ov.appendChild(el);setTimeout(next,550);}
+    else{setTimeout(()=>{ov.classList.add('fade-out');setTimeout(()=>{ov.remove();launchGame();},900);},700);}
+  };
+  next();
+}
+function launchGame(){
+  document.getElementById('hud-name').textContent=state.playerName.toUpperCase();
+  const lh=document.getElementById('locks-hud');lh.innerHTML='';
+  for(let i=0;i<MISSIONS_COUNT;i++){const d=document.createElement('div');d.className='lock-dot';d.id='lock-dot-'+i;lh.appendChild(d);}
+  showScreen('screen-game');
+  startTimer();
+}
+
+// ─── TIMER ─────────────────────────────────────────────
+function startTimer(){
+  updateTimerDisplay();
+  state.timerInterval=setInterval(()=>{
+    state.timeLeft--;updateTimerDisplay();
+    if(state.timeLeft<=0){clearInterval(state.timerInterval);timeOut();}
+  },1000);
+}
+function updateTimerDisplay(){
+  const m=Math.floor(state.timeLeft/60),s=state.timeLeft%60;
+  const el=document.getElementById('timer');
+  el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.className='timer-display';
+  if(state.timeLeft<600)el.classList.add('critical');
+  else if(state.timeLeft<1200)el.classList.add('warning');
+}
+function timeOut(){
+  document.getElementById('puzzle-panel').innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:60vh;text-align:center"><div><div style="font-size:60px;margin-bottom:20px">⏰</div><div style="font-family:var(--font-display);font-size:32px;font-weight:900;color:var(--glow2);text-transform:uppercase;margin-bottom:12px">Tiempo Agotado</div><div style="font-family:var(--font-mono);font-size:13px;color:var(--muted);margin-bottom:30px;letter-spacing:2px">El Dr. Vega sigue desaparecido...</div><button class="btn-primary" onclick="restartGame()">↺ INTENTAR DE NUEVO</button></div></div>`;
+}
+
+// ─── NAV ───────────────────────────────────────────────
+function allMissionsSolved(){for(let i=0;i<MISSIONS_COUNT;i++){if(!state.solved[i])return false;}return true;}
+function enterZone(id){
+  if(id===7){if(!allMissionsSolved()){showTempMessage('🔐 Debes resolver las 7 salas antes de acceder a la oficina.');return;}}
+  state.currentZone=id;
+  document.querySelectorAll('.map-room').forEach(r=>r.classList.remove('active-zone'));
+  const rm=document.getElementById('room-'+id);
+  if(!rm.classList.contains('solved'))rm.classList.add('active-zone');
+  renderZone(id);
+}
+
+// ─── RENDER ZONE ───────────────────────────────────────
+function renderZone(id){
+  const z=zones[id];const isSolved=state.solved[id];
+  const panel=document.getElementById('puzzle-panel');
+  let dg='';
+  if(z.caseData){dg='<div class="data-grid">'+z.caseData.map(d=>`<div class="data-item"><div class="data-label">${d.label}</div><div class="data-value ${d.alert?'alert':''}">${d.value}</div></div>`).join('')+'</div>';}
+  const solvedBanner=isSolved?`<div class="solved-banner"><div class="solved-banner-title">🔓 CANDADO ABIERTO</div><div class="solved-banner-sub">// Esta sala fue resuelta. Elige otra en el mapa.</div></div>`:'';
+  const answerSection=isSolved?'':`<div class="puzzle-section"><div class="puzzle-title">🔐 DESBLOQUEAR CANDADO</div><div class="lock-visual"><div class="lock-icon" id="lock-icon-${id}">🔒</div><div class="lock-info"><div class="lock-type">TIPO: ${z.lockType}</div><div class="lock-hint">${z.lockDesc}</div></div></div><div class="answer-wrap"><input type="text" class="answer-input" id="answer-input-${id}" placeholder="RESPUESTA..." autocomplete="off" onkeydown="if(event.key==='Enter')checkAnswer(${id})"><button class="check-btn" onclick="checkAnswer(${id})">VERIFICAR</button></div><div class="feedback-msg" id="feedback-${id}"></div></div>`;
+  panel.innerHTML=`<div class="zone-header"><div class="zone-icon-big">${z.icon}</div><div><div class="zone-title">${z.name}</div><div class="zone-subtitle">${z.subtitle}</div></div></div><div class="zone-description">${z.description}</div><div class="guide-bubble">${z.guide}</div><div class="case-file"><div class="case-file-header"><div class="case-file-label">📋 Expediente Clínico</div></div><div class="case-file-body">${dg}<div class="case-text">${z.caseText}</div></div></div>${id===0?renderHipnogram():''}${answerSection}${solvedBanner}`;
+}
+
+// ─── HIPNOGRAM ─────────────────────────────────────────
+function renderHipnogram(){
+  return`<div class="case-file"><div class="case-file-header"><div class="case-file-label">📈 Hipnograma — Matías R. · 17 años (4 ciclos REM)</div></div><div class="case-file-body"><svg viewBox="0 0 610 175" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:var(--bg);border:1px solid var(--border);padding:8px">
+  <text x="4" y="18" fill="#4a7a99" font-size="9" font-family="monospace">W</text>
+  <text x="4" y="45" fill="#4a7a99" font-size="9" font-family="monospace">N1</text>
+  <text x="4" y="75" fill="#4a7a99" font-size="9" font-family="monospace">N2</text>
+  <text x="4" y="108" fill="#4a7a99" font-size="9" font-family="monospace">N3</text>
+  <text x="2" y="143" fill="#00c8ff" font-size="9" font-family="monospace">REM</text>
+  <line x1="50" y1="15" x2="590" y2="15" stroke="rgba(74,122,153,.2)" stroke-width=".5"/>
+  <line x1="50" y1="42" x2="590" y2="42" stroke="rgba(74,122,153,.2)" stroke-width=".5"/>
+  <line x1="50" y1="72" x2="590" y2="72" stroke="rgba(74,122,153,.2)" stroke-width=".5"/>
+  <line x1="50" y1="105" x2="590" y2="105" stroke="rgba(74,122,153,.2)" stroke-width=".5"/>
+  <line x1="50" y1="140" x2="590" y2="140" stroke="rgba(74,122,153,.2)" stroke-width=".5"/>
+  <text x="50" y="165" fill="#4a7a99" font-size="8" font-family="monospace">0h</text>
+  <text x="117" y="165" fill="#4a7a99" font-size="8" font-family="monospace">1h</text>
+  <text x="184" y="165" fill="#4a7a99" font-size="8" font-family="monospace">2h</text>
+  <text x="251" y="165" fill="#4a7a99" font-size="8" font-family="monospace">3h</text>
+  <text x="318" y="165" fill="#4a7a99" font-size="8" font-family="monospace">4h</text>
+  <text x="385" y="165" fill="#4a7a99" font-size="8" font-family="monospace">5h</text>
+  <text x="452" y="165" fill="#4a7a99" font-size="8" font-family="monospace">6h</text>
+  <text x="519" y="165" fill="#4a7a99" font-size="8" font-family="monospace">7h</text>
+  <text x="573" y="165" fill="#4a7a99" font-size="8" font-family="monospace">8h</text>
+  <!-- Hipnogram path: Latencia 62min at W, then 4 cycles each ending in REM -->
+  <polyline points="50,15 117,15 120,42 135,72 158,105 180,72 200,140 232,140 235,15 238,15 243,42 260,72 285,105 305,72 322,140 358,140 361,15 364,15 369,42 385,72 408,105 428,72 447,140 487,140 490,15 493,15 498,42 512,72 530,105 548,72 565,140 588,140 590,15" fill="none" stroke="#00c8ff" stroke-width="2"/>
+  <rect x="200" y="133" width="32" height="12" fill="rgba(0,200,255,.22)" rx="2"/>
+  <rect x="322" y="133" width="36" height="12" fill="rgba(0,200,255,.22)" rx="2"/>
+  <rect x="447" y="133" width="40" height="12" fill="rgba(0,200,255,.22)" rx="2"/>
+  <rect x="565" y="133" width="23" height="12" fill="rgba(0,200,255,.22)" rx="2"/>
+  <text x="203" y="130" fill="#00c8ff" font-size="7" font-family="monospace">REM1</text>
+  <text x="325" y="130" fill="#00c8ff" font-size="7" font-family="monospace">REM2</text>
+  <text x="450" y="130" fill="#00c8ff" font-size="7" font-family="monospace">REM3</text>
+  <text x="567" y="130" fill="#00c8ff" font-size="7" font-family="monospace">REM4</text>
+  <text x="230" y="12" fill="#ff4b6e" font-size="11">↑</text>
+  <text x="356" y="12" fill="#ff4b6e" font-size="11">↑</text>
+  <text x="485" y="12" fill="#ff4b6e" font-size="11">↑</text>
+  <text x="585" y="12" fill="#ff4b6e" font-size="11">↑</text>
+  <line x1="117" y1="8" x2="117" y2="155" stroke="rgba(255,204,0,.3)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="52" y="9" fill="#ffcc00" font-size="7" font-family="monospace">Latencia: 62 min</text>
+  <rect x="430" y="3" width="9" height="5" fill="rgba(0,200,255,.3)" rx="1"/>
+  <text x="442" y="8" fill="#4a7a99" font-size="7" font-family="monospace">= REM</text>
+  <text x="480" y="8" fill="#ff4b6e" font-size="7" font-family="monospace">↑ = despertar</text>
+</svg><p style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:6px;letter-spacing:1px">Bloques azules = episodios REM (fin de ciclo completo). ↑ = despertar nocturno. Latencia: 62 min (normal &lt;20 min).</p></div></div>`;
+}
+
+// ─── CHECK ANSWER ──────────────────────────────────────
+function normalize(s){
+  return s.trim().toUpperCase()
+    .replace(/[ÁÀÂÃ]/g,'A').replace(/[ÉÈÊË]/g,'E').replace(/[ÍÌÎÏ]/g,'I')
+    .replace(/[ÓÒÔÕ]/g,'O').replace(/[ÚÙÛÜ]/g,'U').replace(/Ñ/g,'N');
+}
+
+function checkAnswer(id){
+  const input=document.getElementById('answer-input-'+id);
+  if(!input)return;
+  const raw=normalize(input.value);
+  const correct=normalize(zones[id].answer);
+  const aliases={5:['NORADRENALINA','NOREPINEFRINA'],6:['NEUROGENESIS','NEUROGÉNESIS'],7:['4C2DFNMDANNEU']};
+  let ok=raw===correct;
+  if(!ok&&aliases[id])ok=aliases[id].some(a=>raw===normalize(a));
+  const fb=document.getElementById('feedback-'+id);
+  if(ok){
+    input.classList.add('correct');input.classList.remove('incorrect');
+    fb.className='feedback-msg success';
+    fb.textContent=id===7?'✅ CÓDIGO MAESTRO CORRECTO — OFICINA DESBLOQUEADA.':'✅ CÓDIGO CORRECTO — Candado desbloqueado.';
+    state.solved[id]=true;
+    const rm=document.getElementById('room-'+id);
+    rm.classList.remove('active-zone');rm.classList.add('solved');
+    document.getElementById('room-status-'+id).textContent='✓ ABIERTO';
+    if(id<MISSIONS_COUNT){
+      document.getElementById('lock-dot-'+id).classList.add('unlocked');
+      updateProgress();
+      if(allMissionsSolved()){
+        const fr=document.getElementById('room-7');
+        fr.classList.remove('locked-room');
+        fr.style.setProperty('border-color','var(--glow3)','');
+        fr.style.setProperty('color','var(--glow3)','');
+        document.getElementById('room-status-7').textContent='⚡ DESBLOQUEADA';
+        showTempMessage('🔓 ¡TODOS LOS CANDADOS ABIERTOS! La Oficina del Dr. Vega está desbloqueada.');
+      }
+    }
+    if(id===7){setTimeout(winGame,1500);}
+    else{setTimeout(()=>renderZone(id),800);}
+  }else{
+    input.classList.add('incorrect');input.classList.remove('correct');
+    fb.className='feedback-msg error';
+    const msgs=['Respuesta incorrecta. Revisa el expediente clínico y el tipo de candado con cuidado.','No es correcto. El globito de guía puede orientarte sin revelar la solución.','Sigue intentando. Toda la información está en los datos del caso.','Verifica el tipo de respuesta que pide el candado (número, letra, sigla, palabra).'];
+    fb.textContent='❌ '+msgs[Math.floor(Math.random()*msgs.length)];
+    setTimeout(()=>input.classList.remove('incorrect'),400);
+  }
+}
+
+// ─── PROGRESS ──────────────────────────────────────────
+function updateProgress(){
+  let c=0;for(let i=0;i<MISSIONS_COUNT;i++){if(state.solved[i])c++;}
+  document.getElementById('progress-fill').style.width=(c/MISSIONS_COUNT*100)+'%';
+  document.getElementById('progress-label').textContent=c+' / '+MISSIONS_COUNT+' CANDADOS ABIERTOS';
+}
+
+// ─── HINTS ─────────────────────────────────────────────
+function showHint(){
+  const z=state.currentZone;
+  if(z<0){showTempMessage('Navega a una sala primero para pedir una pista.');return;}
+  if(state.solved[z]){showTempMessage('Esta sala ya fue resuelta.');return;}
+  const zone=zones[z];
+  const hintIdx=Math.min(state.hintsUsed,zone.hints.length-1);
+  const hint=zone.hints[hintIdx];
+  let cost=6*60,costMsg='⚠ Esta pista descontó 6 minutos de tu tiempo.';
+  if(state.bonusHint&&state.hintsUsed===0){
+    cost=0;state.bonusHint=false;costMsg='⭐ Pista gratuita del Escáner Neural usada.';
+  }else if(state.freeFirstHint&&!state.usedFreeHintZones.has(z)){
+    cost=0;state.usedFreeHintZones.add(z);costMsg='📊 Tablet de Datos: primera pista de esta sala sin costo.';
+  }
+  document.getElementById('hint-text').innerHTML=hint;
+  document.getElementById('hint-cost-msg').textContent=costMsg;
+  document.getElementById('hint-modal').classList.add('visible');
+  state.timeLeft=Math.max(0,state.timeLeft-cost);
+  state.hintsUsed++;
+  updateTimerDisplay();
+}
+function closeHint(){document.getElementById('hint-modal').classList.remove('visible');}
+
+// ─── WIN ───────────────────────────────────────────────
+function winGame(){
+  clearInterval(state.timerInterval);
+  const m=Math.floor(state.timeLeft/60),s=state.timeLeft%60;
+  document.getElementById('final-time').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('final-hints').textContent=state.hintsUsed;
+  document.getElementById('final-agent').textContent=state.playerName;
+  showScreen('screen-final');
+  launchConfetti();
+}
+function launchConfetti(){
+  const cl=['#00c8ff','#39ff14','#ff4b6e','#ffcc00','#bf7fff','#ffffff'];
+  for(let i=0;i<100;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div');el.className='confetti-piece';
+      el.style.left=Math.random()*100+'vw';el.style.top='-10px';
+      el.style.background=cl[Math.floor(Math.random()*cl.length)];
+      el.style.animationDuration=(2+Math.random()*3)+'s';
+      el.style.animationDelay=Math.random()*1.5+'s';
+      el.style.transform='rotate('+Math.random()*360+'deg)';
+      document.body.appendChild(el);setTimeout(()=>el.remove(),5000);
+    },i*25);
+  }
+}
+
+// ─── UTILS ─────────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showTempMessage(msg){
+  const p=document.getElementById('puzzle-panel');
+  const ex=p.querySelector('.temp-msg');if(ex)ex.remove();
+  const el=document.createElement('div');el.className='temp-msg feedback-msg success';
+  el.style.cssText='margin:14px 26px;font-size:13px';el.textContent=msg;
+  p.prepend(el);setTimeout(()=>el.remove(),4000);
+}
+function restartGame(){
+  clearInterval(state.timerInterval);
+  Object.assign(state,{playerName:'',equipment:'',timeLeft:60*60,timerInterval:null,solved:new Array(8).fill(false),hintsUsed:0,currentZone:-1,bonusHint:false,freeFirstHint:false,usedFreeHintZones:new Set()});
+  document.getElementById('playerName').value='';
+  document.querySelectorAll('.equip-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('startBtn').disabled=true;
+  showScreen('screen-intro');
+}
+
+showScreen('screen-intro');
+</script>
+</body>
+</html>
